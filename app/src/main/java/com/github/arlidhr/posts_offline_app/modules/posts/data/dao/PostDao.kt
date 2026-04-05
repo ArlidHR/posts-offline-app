@@ -1,10 +1,9 @@
 package com.github.arlidhr.posts_offline_app.modules.posts.data.dao
 
 import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 import com.github.arlidhr.posts_offline_app.modules.posts.data.entity.PostEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -12,7 +11,7 @@ import kotlinx.coroutines.flow.Flow
  * Room DAO for the `posts` table.
  *
  * Methods returning [Flow] are reactive — Room automatically re-emits
- * whenever the underlying data changes (e.g., after [insertAll]).
+ * whenever the underlying data changes (e.g., after [upsertAll]).
  * This is the backbone of the offline-first strategy.
  */
 @Dao
@@ -49,25 +48,39 @@ interface PostDao {
     fun searchPosts(query: String): Flow<List<PostEntity>>
 
     /**
-     * Inserts a list of posts. Replaces existing entries on conflict (same ID).
+     * Upserts a list of posts (INSERT or UPDATE on conflict).
+     *
+     * CRITICAL: Uses @Upsert instead of @Insert(onConflict = REPLACE).
+     * REPLACE internally does DELETE + INSERT, which triggers ForeignKey CASCADE
+     * and destroys all child comments (including user-created local ones).
+     * @Upsert does INSERT OR IGNORE + UPDATE, which does NOT trigger CASCADE.
      */
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(posts: List<PostEntity>)
+    @Upsert
+    suspend fun upsertAll(posts: List<PostEntity>)
 
     /**
-     * Deletes all posts from the table.
+     * Deletes only posts whose IDs are NOT in the given list.
+     * Used during refresh to remove stale posts without triggering
+     * CASCADE deletes on posts that still exist (preserving their local comments).
      */
-    @Query("DELETE FROM posts")
-    suspend fun deleteAll()
+    @Query("DELETE FROM posts WHERE id NOT IN (:ids)")
+    suspend fun deletePostsNotIn(ids: List<Int>)
 
     /**
-     * Atomically replaces all posts: deletes existing data and inserts fresh data.
-     * Wrapped in a [Transaction] to ensure data consistency — if insertion fails,
-     * the deletion is rolled back.
+     * Atomically refreshes posts from the API using a smart-upsert strategy:
+     * 1. Delete only posts that no longer exist on the server (stale cleanup).
+     * 2. Upsert all current posts (INSERT OR REPLACE by PrimaryKey).
+     *
+     * This avoids deleting posts that still exist, so their CASCADE foreign key
+     * does NOT trigger on the comments table — preserving user-created local comments.
+     *
+     * Previous implementation used deleteAll() + insertAll(), which triggered
+     * CASCADE deletes on ALL comments (including isLocal = true) every refresh.
      */
     @Transaction
     suspend fun refreshPosts(posts: List<PostEntity>) {
-        deleteAll()
-        insertAll(posts)
+        val freshIds = posts.map { it.id }
+        deletePostsNotIn(freshIds)
+        upsertAll(posts)
     }
 }
