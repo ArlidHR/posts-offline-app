@@ -1,0 +1,25 @@
+# Dependabot configuration
+#
+# Keeps GitHub Actions dependencies up to date automatically.
+# Opens a PR when a new version of a used Action is released.
+#
+# Scope: GitHub Actions only.
+# Android/Gradle dependencies are managed manually via libs.versions.toml
+# to ensure compatibility between AGP, Kotlin, and KSP versions.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "[Config]"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
