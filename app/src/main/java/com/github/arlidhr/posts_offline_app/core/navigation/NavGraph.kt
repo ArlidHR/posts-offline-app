@@ -11,13 +11,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.github.arlidhr.posts_offline_app.modules.posts.presentation.view.PostsListScreen
 
 /**
  * Application navigation graph using Jetpack Navigation Compose.
  *
  * Defines all screen destinations and transitions.
- * Each composable destination will be replaced with the actual screen
- * implementation in the respective feature presentation branches.
  *
  * @param navController The navigation controller managing the back stack.
  * @param modifier Optional modifier for the NavHost container.
@@ -34,8 +33,11 @@ fun AppNavGraph(
     ) {
         // Posts list screen
         composable(route = Routes.PostsList.route) {
-            // TODO: Replace with PostsListScreen in feature/posts-presentation
-            PlaceholderScreen(title = "Posts List")
+            PostsListScreen(
+                onPostClick = { postId ->
+                    navController.navigate(Routes.PostComments.createRoute(postId))
+                }
+            )
         }
 
         // Post comments screen
