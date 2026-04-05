@@ -1,5 +1,8 @@
 package com.github.arlidhr.posts_offline_app.core.di
 
+import com.github.arlidhr.posts_offline_app.networking.ConnectivityObserver
+import com.github.arlidhr.posts_offline_app.networking.NetworkConnectivityObserver
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -7,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import javax.inject.Qualifier
+import javax.inject.Singleton
 
 /**
  * Qualifiers for coroutine dispatchers.
@@ -38,4 +42,19 @@ object AppModule {
     @Provides
     @MainDispatcher
     fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+}
+
+/**
+ * Hilt module for interface-to-implementation bindings.
+ * Separated from [AppModule] because @Binds requires an abstract class.
+ */
+@Module
+@InstallIn(SingletonComponent::class)
+abstract class AppBindsModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindConnectivityObserver(
+        impl: NetworkConnectivityObserver
+    ): ConnectivityObserver
 }
