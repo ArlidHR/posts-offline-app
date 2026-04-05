@@ -1,25 +1,37 @@
 package com.github.arlidhr.posts_offline_app.data.database
 
 import android.content.Context
+import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.github.arlidhr.posts_offline_app.core.utils.Constants
+import com.github.arlidhr.posts_offline_app.modules.posts.data.dao.PostDao
+import com.github.arlidhr.posts_offline_app.modules.posts.data.entity.PostEntity
 
 /**
- * Room Database - Single source of truth for local persistence.
+ * Room Database — Single source of truth for local persistence.
  *
- * NOTE: @Database annotation and entities will be added in feature/posts-module
- * when PostEntity is created. Room requires at least one entity to compile.
+ * Currently includes:
+ * - [PostEntity] / [PostDao] — Posts table
  *
- * This file serves as the placeholder that will be completed with:
- * - @Database(entities = [PostEntity::class, CommentEntity::class], version = 1)
- * - abstract fun postDao(): PostDao
- * - abstract fun commentDao(): CommentDao
+ * Will be extended with:
+ * - CommentEntity / CommentDao — in feature/comments-module
+ *
+ * Version history:
+ * - v1: Initial schema with posts table
  */
+@Database(
+    entities = [PostEntity::class],
+    version = 1,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
+
+    abstract fun postDao(): PostDao
 
     companion object {
         fun create(context: Context): AppDatabase {
-            return androidx.room.Room.databaseBuilder(
+            return Room.databaseBuilder(
                 context.applicationContext,
                 AppDatabase::class.java,
                 Constants.DATABASE_NAME
