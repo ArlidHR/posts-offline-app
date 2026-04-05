@@ -1,11 +1,14 @@
 package com.github.arlidhr.posts_offline_app.core.di
 
+import android.content.Context
+import com.github.arlidhr.posts_offline_app.data.database.AppDatabase
 import com.github.arlidhr.posts_offline_app.networking.ConnectivityObserver
 import com.github.arlidhr.posts_offline_app.networking.NetworkConnectivityObserver
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -26,14 +29,16 @@ annotation class MainDispatcher
 
 /**
  * Hilt module providing app-level dependencies:
- * Coroutine Dispatchers.
- *
- * NOTE: AppDatabase provider will be added in feature/posts-module
- * when Room @Database annotation is activated with entities.
+ * Room Database and Coroutine Dispatchers.
  */
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    @Singleton
+    fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase =
+        AppDatabase.create(context)
 
     @Provides
     @IoDispatcher
